@@ -4,9 +4,12 @@ import { AppDataSource } from './config/database';
 import expenseRoutes from './routes/Expense.route';
 import userRoutes from './routes/User.route';
 
+const cors = require('cors');
+
 const app = express();
 const port = 3000;
 
+app.use(cors());
 app.use(express.json());
 
 // Connexion à la base de données

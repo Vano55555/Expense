@@ -1,13 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from './components/ExpenseForm.vue'; 
+import UserForm from './components/UserForm.vue';
+import ExpenseForm from './components/ExpenseForm.vue'; 
 
 const routes = [
-  { path: '/', component: HomeView }
+  {
+    path: '/users', 
+    component: UserForm,
+  },
+  {
+    path: '/expenses',  
+    component: ExpenseForm,
+  },
+  {
+    path: '/',
+    redirect: '/users',
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 });
 
 export default router;

@@ -11,23 +11,30 @@
     <table class="table table-bordered table-hover table-striped">
       <thead class="table-light">
         <tr>
+          <th>ID</th>
           <th>Montant</th>
           <th>Catégorie</th>
           <th>Date</th>
+          <th>User ID</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="expense in expenses" :key="expense.id">
-          <td>{{ expense.montant }} €</td>
+          <td>{{ expense.id }}</td>
+          <td>{{ expense.montant }} FCFA</td>
           <td>{{ expense.categorie }}</td>
           <td>{{ formatDate(expense.date) }}</td>
+          <td>{{ expense.userId }}</td>
           <td>
             <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
               <i class="bi bi-pencil"></i> Modifier
             </button>
             <button class="btn btn-danger btn-sm" @click="deleteExpense(expense.id)">
               <i class="bi bi-trash"></i> Supprimer
+            </button>
+            <button class="btn btn-primary btn-sm" @click="downloadPDF(expense)">
+              <i class="bi bi-file-earmark-pdf"></i> Télécharger
             </button>
           </td>
         </tr>
@@ -76,6 +83,8 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
+import Swal from "sweetalert2";
+import jsPDF from "jspdf";
 
 export default defineComponent({
   name: "ExpenseForm",
@@ -85,10 +94,10 @@ export default defineComponent({
       montant: number;
       categorie: string;
       date: string;
-      userId: number;  // Ajout de userId dans la définition de Expense
+      userId: number;
     }
 
-    const API_URL = "http://localhost:3000/api/expenses"; // Remplace avec ton API
+    const API_URL = "http://localhost:3000/api/expenses"; 
 
     const showModal = ref<boolean>(false);
     const expenses = ref<Expense[]>([]);
@@ -115,7 +124,7 @@ export default defineComponent({
     const saveExpense = async () => {
       // Vérifier si tous les champs sont remplis
       if (!expense.value.montant || !expense.value.categorie || !expense.value.date) {
-        alert("Veuillez remplir tous les champs.");
+        Swal.fire("Erreur", "Veuillez remplir tous les champs.", "error");
         return;
       }
 
@@ -131,9 +140,9 @@ export default defineComponent({
 
         if (!response.ok) throw new Error("Erreur lors de l'enregistrement de la dépense");
 
-        alert(editingExpense.value ? "Dépense modifiée avec succès !" : "Dépense ajoutée avec succès !");
+        Swal.fire("Succès", editingExpense.value ? "Dépense modifiée avec succès !" : "Dépense ajoutée avec succès !", "success");
         closeModal();
-        fetchExpenses(); // Recharger les dépenses
+        fetchExpenses();
       } catch (error) {
         console.error("Erreur lors de l'ajout/modification de la dépense:", error);
       }
@@ -149,7 +158,20 @@ export default defineComponent({
     // Supprimer une dépense
     const deleteExpense = async (id?: number) => {
       if (!id) return;
-      if (!confirm("Voulez-vous vraiment supprimer cette dépense ?")) return;
+      
+      // Utilisation de SweetAlert pour confirmation
+      const result = await Swal.fire({
+        title: 'Confirmer la suppression',
+        text: "Voulez-vous vraiment supprimer cette dépense ?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+      });
+
+      if (!result.isConfirmed) return;
 
       try {
         const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
@@ -175,10 +197,15 @@ export default defineComponent({
     // Formater la date
     const formatDate = (date: string) => new Date(date).toLocaleDateString("fr-FR");
 
-    // Charger les dépenses au démarrage
+    const downloadPDF = (expense: Expense) => {
+      const doc = new jsPDF();
+      doc.text(`Dépense ID: ${expense.id}\nMontant: ${expense.montant} €\nCatégorie: ${expense.categorie}\nDate: ${expense.date}\nUser ID: ${expense.userId}`, 10, 10);
+      doc.save(`Depense_${expense.id}.pdf`);
+    };
+
     onMounted(fetchExpenses);
 
-    return { showModal, expenses, expense, editingExpense, saveExpense, editExpense, deleteExpense, resetForm, closeModal, formatDate };
+    return { showModal, expenses, expense, editingExpense, saveExpense, editExpense, deleteExpense, resetForm, closeModal, formatDate, downloadPDF };
   },
 });
 </script>

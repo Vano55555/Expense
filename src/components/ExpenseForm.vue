@@ -7,39 +7,43 @@
       <i class="bi bi-plus-circle"></i> Ajouter une Dépense
     </button>
 
-    <!-- Tableau des dépenses -->
-    <table class="table table-bordered table-hover table-striped">
-      <thead class="table-light">
-        <tr>
-          <th>ID</th>
-          <th>Montant</th>
-          <th>Catégorie</th>
-          <th>Date</th>
-          <th>User ID</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="expense in expenses" :key="expense.id">
-          <td>{{ expense.id }}</td>
-          <td>{{ expense.montant }} FCFA</td>
-          <td>{{ expense.categorie }}</td>
-          <td>{{ formatDate(expense.date) }}</td>
-          <td>{{ expense.userId }}</td>
-          <td>
-            <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
-              <i class="bi bi-pencil"></i> Modifier
-            </button>
-            <button class="btn btn-danger btn-sm" @click="deleteExpense(expense.id)">
-              <i class="bi bi-trash"></i> Supprimer
-            </button>
-            <button class="btn btn-primary btn-sm" @click="downloadPDF(expense)">
-              <i class="bi bi-file-earmark-pdf"></i> Télécharger
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="card shadow-sm mt-5">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">Liste des Dépenses</h2>
+      <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Montant</th>
+            <th>Catégorie</th>
+            <th>Date</th>
+            <th>User ID</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="expense in expenses" :key="expense.id">
+            <td>{{ expense.id }}</td>
+            <td>{{ expense.montant }} FCFA</td>
+            <td>{{ expense.categorie }}</td>
+            <td>{{ formatDate(expense.date) }}</td>
+            <td>{{ expense.userId }}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
+                <i class="bi bi-pencil"></i> Modifier
+              </button>
+              <button class="btn btn-danger btn-sm" @click="deleteExpense(expense.id)">
+                <i class="bi bi-trash"></i> Supprimer
+              </button>
+              <button class="btn btn-primary btn-sm" @click="downloadPDF(expense)">
+                <i class="bi bi-file-earmark-pdf"></i> Télécharger
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
     <!-- MODAL D'AJOUT/MODIFICATION -->
     <div v-if="showModal" class="modal-overlay">

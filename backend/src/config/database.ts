@@ -1,6 +1,11 @@
 import { DataSource } from 'typeorm';
 import { User } from '../entities/User.entity';
 import { Expense } from '../entities/Expense.entity';
+import { Category } from '../entities/Category.entity';
+import { ExpenseUser } from '../entities/Expense_User.entity';
+import { Budget } from '../entities/Budget.entity';
+import { Transaction } from '../entities/Transaction.entity';
+import { TransactionType } from '../entities/TransactionType';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -9,7 +14,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '', 
   database: process.env.DB_NAME || 'suivi-depenses', 
-  entities: [User, Expense],
+  entities: [User, Expense, Category, ExpenseUser, Transaction, TransactionType, Budget],
   synchronize: true, 
   logging: true,
 });

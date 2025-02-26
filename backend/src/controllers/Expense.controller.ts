@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { Expense } from '../entities/Expense.entity';
-import { User } from '../entities/User.entity';  // Importer l'entité User
+import { User } from '../entities/User.entity'; 
 
 const expenseRepository = AppDataSource.getRepository(Expense);
 

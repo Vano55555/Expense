@@ -1,8 +1,12 @@
 <template>
   <div class="container py-5">
-    <!-- Bouton pour ouvrir le modal -->
+    <!-- Bouton pour ouvrir le modal d'inscription -->
     <button type="button" class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#userModal">
       Inscription
+    </button>
+    <!-- Bouton pour ouvrir le modal de connexion -->
+    <button type="button" class="btn btn-secondary mb-4" data-bs-toggle="modal" data-bs-target="#loginModal">
+      Connexion
     </button>
 
     <!-- Modal pour l'ajout d'utilisateur -->
@@ -45,6 +49,34 @@
                 <input type="password" v-model="user.password" class="form-control" id="password" required />
               </div>
               <button type="submit" class="btn btn-success w-100 py-2">Créer l'utilisateur</button>
+              <button type="button" class="btn btn-danger w-100 py-2 mt-2" data-bs-dismiss="modal">Annuler</button>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal pour la connexion -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">Connexion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="loginUser">
+              <div class="mb-3">
+                <label for="loginEmail" class="form-label">Email</label>
+                <input type="email" v-model="loginData.email" class="form-control" id="loginEmail" required />
+              </div>
+              <div class="mb-3">
+                <label for="loginPassword" class="form-label">Mot de passe</label>
+                <input type="password" v-model="loginData.password" class="form-control" id="loginPassword" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2">Se connecter</button>
+              <button type="button" class="btn btn-danger w-100 py-2 mt-2" data-bs-dismiss="modal">Annuler</button>
             </form>
           </div>
         </div>
@@ -56,7 +88,7 @@
       <div class="card-body">
         <h2 class="card-title text-center mb-4">Liste des Utilisateurs</h2>
         <table class="table table-striped table-bordered">
-          <thead class="table-dark">
+          <thead class="table-  dark">
             <tr>
               <th>ID</th>
               <th>Nom</th>
@@ -73,6 +105,9 @@
                 <button @click="deleteUser(user.id)" class="btn btn-danger btn-sm">
                   <i class="bi bi-trash-fill"></i> Supprimer
                 </button>
+                <button @click="editUser(user)" class="btn btn-warning btn-sm ms-2">
+                  <i class="bi bi-pencil-fill"></i> Modifier
+                </button>
               </td>
             </tr>
           </tbody>
@@ -88,12 +123,18 @@ import axios from 'axios';
 
 export default defineComponent({
   name: 'UserForm',
+
   setup() {
     const user = ref({
       nom: '',
       prenom: '',
       dateNaissance: '',
       sexe: 'Masculin',
+      email: '',
+      password: ''
+    });
+
+    const loginData = ref({
       email: '',
       password: ''
     });
@@ -122,139 +163,45 @@ export default defineComponent({
     const deleteUser = async (id: number) => {
       try {
         await axios.delete(`http://localhost:3000/api/users/${id}`);
-        fetchUsers(); // Rafraîchir la liste après la suppression
-      } catch (error) {
+        fetchUsers();
+      } catch (error) { 
         console.error(error);
       }
     };
 
+    const editUser = (userToEdit: any) => {
+  user.value = { ...userToEdit }; 
+
+  const userModal = new (window as any).bootstrap.Modal(document.getElementById('userModal'));
+  userModal.show();
+};
+
+const loginUser = async () => {
+  try {
+    console.log("Données envoyées :", loginData.value); // Place cette ligne ici pour s'assurer qu'elle s'exécute avant l'envoi
+
+    const response = await axios.post('http://localhost:5000/api/login', loginData.value, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    console.log(loginData.value);
+    console.log(response.data);  
+
+    if (response.data.success) {
+      alert('Connexion réussie!');
+    } else {
+      alert('Échec de la connexion');
+    }
+  } catch (error) {
+    console.error('Erreur lors de la connexion : ', error);
+    alert('Erreur lors de la connexion');
+  }
+};
+
     // Charger les utilisateurs au démarrage
     onMounted(fetchUsers);
 
-    return { user, users, createUser, deleteUser };
+    return { user, users, createUser, deleteUser, editUser, loginUser, loginData };
   }
 });
 </script>
-
-<style scoped>
-/* Global styles */
-body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f6f9;
-  color: #333;
-}
-
-/* Modal styling */
-.modal-dialog {
-  max-width: 600px;
-}
-
-.modal-body {
-  padding: 25px;
-}
-
-.card {
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.card-body {
-  padding: 25px;
-}
-
-.card-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
-}
-
-/* Form controls styling */
-.form-control {
-  border-radius: 10px;
-  box-shadow: none;
-  border: 1px solid #ccc;
-  transition: border-color 0.3s ease;
-}
-
-.form-control:focus {
-  border-color: #00bcd4;
-  box-shadow: 0 0 8px rgba(0, 188, 212, 0.5);
-}
-
-/* Submit button styling */
-.btn {
-  border-radius: 50px;
-  font-weight: 600;
-}
-
-.btn-success {
-  background-color: #28a745;
-  border: none;
-}
-
-.btn-success:hover {
-  background-color: #218838;
-}
-
-.btn-success:focus {
-  box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
-}
-
-/* Table styling */
-table {
-  width: 100%;
-  border-radius: 8px;
-}
-
-.table th,
-.table td {
-  text-align: center;
-  padding: 12px;
-}
-
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: #f9f9f9;
-}
-
-.table-bordered {
-  border: 1px solid #ddd;
-}
-
-.table-dark {
-  background-color: #343a40;
-  color: white;
-}
-
-.table-dark th,
-.table-dark td {
-  color: #f8f9fa;
-}
-
-/* Button delete styling */
-.btn-danger {
-  background-color: #dc3545;
-  border-radius: 25px;
-  padding: 6px 20px;
-  transition: background-color 0.3s ease;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .card-body {
-    padding: 20px;
-  }
-
-  .table td,
-  .table th {
-    font-size: 0.9rem;
-  }
-
-  .btn {
-    font-size: 0.9rem;
-  }
-}
-</style>

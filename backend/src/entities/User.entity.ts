@@ -1,10 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Expense } from './Expense.entity';
+import { ExpenseUser } from './Expense_User.entity';
+import { Budget } from './Budget.entity';
 
-@Entity()
-
+@Entity('user')
 export class User {
-  
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -14,7 +14,7 @@ export class User {
   @Column()
   prenom!: string;
 
-  @Column({ type: "date" })
+  @Column({ type: 'date' })
   dateNaissance!: Date;
 
   @Column()
@@ -27,5 +27,11 @@ export class User {
   password!: string;
 
   @OneToMany(() => Expense, (expense) => expense.user)
-  expenses!: Expense[];  
+  expenses!: Expense[];
+
+  @OneToMany(() => ExpenseUser, (expenseUser) => expenseUser.user)
+  expenseUsers!: ExpenseUser[]; 
+
+  @OneToMany(() => Budget, (budget) => budget)
+  budgets!: Budget[]; 
 }

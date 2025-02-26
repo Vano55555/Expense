@@ -1,6 +1,14 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { User } from '../entities/User.entity';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+// Crée une interface pour le corps de la requête
+interface LoginRequestBody {
+  email: string;
+  password: string;
+}
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -60,5 +68,42 @@ export const deleteUser = async (req: Request, res: Response): Promise <any> => 
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: "Error deleting user", error });
+  }
+};
+
+interface LoginRequestBody {
+  email: string;
+  password: string;
+}
+
+export const loginUser = async (req: Request<{}, {}, LoginRequestBody>, res: Response): Promise <any> => {
+  try {
+    const { email, password } = req.body;
+
+    // Recherche de l'utilisateur par email
+    const user = await userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Comparaison des mots de passe
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Création du token JWT
+    const token = jwt.sign({ id: user.id }, 'your_secret_key', { expiresIn: '1h' });
+
+    res.status(200).json({ token });
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      res.status(500).json({ message: 'Error logging in user', error: error.message });
+    } else {
+      res.status(500).json({ message: 'Unknown error', error });
+    }
   }
 };

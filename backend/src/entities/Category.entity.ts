@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 import { Expense } from './Expense.entity';
 import { Budget } from "./Budget.entity";
+import { CategoryType } from "./CategorieType.entity";
 
 @Entity()
 export class Category {
@@ -22,5 +23,10 @@ export class Category {
     budgets!: Budget[];
 
     @OneToMany(() => Category, category => category.parentCategory)
-    children!: Category[];  // Relation avec les sous-catégories
+    children!: Category[];  
+
+
+  @ManyToOne(() => CategoryType, (categoryType) => categoryType.categories, { nullable: false })
+  @JoinColumn({ name: "categoryTypeId" })
+  categoryType!: CategoryType;
 }

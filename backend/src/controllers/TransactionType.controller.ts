@@ -3,7 +3,7 @@ import { AppDataSource } from '../config/database';
 import { Transaction } from '../entities/Transaction.entity';
 import { User } from '../entities/User.entity';
 import { Expense } from '../entities/Expense.entity';
-import { TransactionType } from '../entities/TransactionType';
+import { TransactionType } from '../entities/TransactionType.entity';
 
 export const createTransactionType = async (req: Request, res: Response): Promise<any> => {
   try {

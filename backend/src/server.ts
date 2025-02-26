@@ -4,10 +4,12 @@ import { AppDataSource } from './config/database';
 import expenseRoutes from './routes/Expense.route';
 import userRoutes from './routes/User.route';
 import authRoutes from './routes/Auth.route';
-import budgetroute from './routes/Budget.route';
-import transactionroute from './routes/Transaction.route';
-import expenseuserroute from './routes/Expense_User.route';
-import transactiontyperoute from './routes/TransactionType.route'; // Assurez-vous d'avoir cette importation
+import budgetRoutes from './routes/Budget.route';
+import transactionRoutes from './routes/Transaction.route';
+import expenseuserRoutes from './routes/Expense_User.route';
+import transactiontypeRoutes from './routes/TransactionType.route';
+import categoryRoutes from './routes/CategoryType.route';
+import categorytypeRoutes from './routes/CategoryType.route';
 
 const cors = require('cors');
 
@@ -30,10 +32,12 @@ AppDataSource.initialize()
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/budgets', budgetroute);  
-app.use('/api/transactions', transactionroute);  
-app.use('/api/expense_users', expenseuserroute);  
-app.use('/api/transaction_types', transactiontyperoute);  
+app.use('/api/budgets', budgetRoutes);  
+app.use('/api/transactions', transactionRoutes);  
+app.use('/api/expense_users', expenseuserRoutes);  
+app.use('/api/transaction_types', transactiontypeRoutes); 
+app.use('/api/category_types', categorytypeRoutes);
+app.use('/api/category', categoryRoutes)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

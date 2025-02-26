@@ -23,6 +23,32 @@
                   <i class="bi bi-wallet2"></i> Dépenses
                 </router-link>
               </li>
+              <li class="nav-item">
+                <router-link to="/budget" class="nav-link special-link">
+                  <i class="bi bi-briefcase"></i> Budget
+                </router-link>
+              </li>
+              <li class="nav-item">
+                <router-link to="/transactions" class="nav-link special-link">
+                  <i class="bi bi-credit-card"></i> Transactions
+                </router-link>
+              </li>
+              <li class="nav-item">
+                <router-link to="/expenseuser" class="nav-link special-link">
+                  <i class="bi bi-person-circle"></i> Expense User
+                </router-link>
+              </li>
+              <!-- New Links for Category and CategoryType forms -->
+              <li class="nav-item">
+                <router-link to="/categoryform" class="nav-link special-link">
+                  <i class="bi bi-folder-plus"></i> Catégorie
+                </router-link>
+              </li>
+              <li class="nav-item">
+                <router-link to="/categorytypeform" class="nav-link special-link">
+                  <i class="bi bi-tags"></i> Type de Catégorie
+                </router-link>
+              </li>
             </ul>
           </div>
         </div>

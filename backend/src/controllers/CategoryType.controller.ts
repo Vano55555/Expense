@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
-import { CategoryType } from '../entities/CategorieType.entity';
+import { CategoryType } from '../entities/CategoryType.entity';
 
 const categoryTypeRepository = AppDataSource.getRepository(CategoryType);
 
@@ -46,7 +46,7 @@ export const updateCategoryType = async (req: Request, res: Response): Promise<a
 export const getAllCategoryTypes = async (req: Request, res: Response) => {
   try {
     const categoryTypes = await categoryTypeRepository.find({
-      relations: ["categories"]  // Charger les catégories liées
+      relations: ["categories"]  
     });
     res.json(categoryTypes);
   } catch (error) {

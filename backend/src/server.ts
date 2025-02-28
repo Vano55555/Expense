@@ -8,7 +8,7 @@ import budgetRoutes from './routes/Budget.route';
 import transactionRoutes from './routes/Transaction.route';
 import expenseuserRoutes from './routes/Expense_User.route';
 import transactiontypeRoutes from './routes/TransactionType.route';
-import categoryRoutes from './routes/CategoryType.route';
+import categoryRoutes from './routes/Category.route';
 import categorytypeRoutes from './routes/CategoryType.route';
 
 const cors = require('cors');
@@ -37,7 +37,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/expense_users', expenseuserRoutes);  
 app.use('/api/transaction_types', transactiontypeRoutes); 
 app.use('/api/category_types', categorytypeRoutes);
-app.use('/api/category', categoryRoutes)
+app.use('/api/', categoryRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

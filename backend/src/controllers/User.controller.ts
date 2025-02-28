@@ -4,7 +4,7 @@ import { User } from '../entities/User.entity';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Crée une interface pour le corps de la requête
+// Crée une interface 
 interface LoginRequestBody {
   email: string;
   password: string;

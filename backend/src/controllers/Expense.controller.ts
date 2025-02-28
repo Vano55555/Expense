@@ -9,7 +9,6 @@ export const createExpense = async (req: Request, res: Response): Promise<any> =
   try {
     const { montant, categorie, date, userId } = req.body;
 
-    // Vérification du userId
     if (!userId) {
       return res.status(400).json({ message: "userId is required to create an expense" });
     }
@@ -27,10 +26,10 @@ export const createExpense = async (req: Request, res: Response): Promise<any> =
       montant,
       categorie,
       date,
-      user: user  // Lier l'utilisateur à la dépense
+      user: user  
     });
 
-    // Sauvegarder la dépense dans la base de données
+    // Sauvegarder la dépense 
     await expenseRepository.save(expense);
 
     // Retourner la dépense créée
@@ -46,24 +45,22 @@ export const updateExpense = async (req: Request, res: Response): Promise<any> =
     const { id } = req.params;
     const { montant, categorie, date, userId } = req.body;
 
-    // Vérification de l'existence de l'utilisateur
     const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Récupérer la dépense à mettre à jour
+    // Récupérer la dépense à modifier
     const expense = await expenseRepository.findOneBy({ id: parseInt(id) });
 
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });
     }
 
-    // Mettre à jour les champs de la dépense
     expense.montant = montant;
     expense.categorie = categorie;
     expense.date = date;
-    expense.user = user;  // Relier la dépense à l'utilisateur
+    expense.user = user;
 
     // Sauvegarder la dépense mise à jour
     await expenseRepository.save(expense);

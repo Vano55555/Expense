@@ -11,7 +11,6 @@ export const createTransaction = async (req: Request, res: Response): Promise<an
   try {
     const { montant, transactiontypeId, modePaiement, date, userId, expenseId } = req.body;
 
-    // Vérification du userId
     if (!userId) {
       return res.status(400).json({ message: "userId is required to create a transaction" });
     }
@@ -39,12 +38,12 @@ export const createTransaction = async (req: Request, res: Response): Promise<an
       montant,
       modePaiement,
       date,
-      user : user,  // Associer l'utilisateur
-      expense : expense,  // Associer la dépense
-      transactionType : transactionType  // Associer le type de transaction
+      user : user,  
+      expense : expense, 
+      transactionType : transactionType 
     });
 
-    // Sauvegarder la transaction dans la base de données
+    // Sauvegarder la transaction 
     await transactionRepository.save(transaction);
 
     // Retourner la transaction créée
@@ -60,13 +59,12 @@ export const updateTransaction = async (req: Request, res: Response): Promise<an
     const { id } = req.params;
     const { montant, modePaiement, date, userId } = req.body;
 
-    // Vérification de l'existence de l'utilisateur
     const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Récupérer la transaction à mettre à jour
+    // Récupérer la transaction à modifier
     const transaction = await transactionRepository.findOneBy({ id: parseInt(id) });
 
     if (!transaction) {
@@ -77,7 +75,7 @@ export const updateTransaction = async (req: Request, res: Response): Promise<an
     transaction.montant = montant;
     transaction.date = date;
     transaction.modePaiement = modePaiement;
-    transaction.user = user;  // Relier la transaction à l'utilisateur
+    transaction.user = user;  
 
     // Sauvegarder la transaction mise à jour
     await transactionRepository.save(transaction);

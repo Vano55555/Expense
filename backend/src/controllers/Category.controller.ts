@@ -1,33 +1,24 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { Category } from '../entities/Category.entity';
-import { CategoryType } from '../entities/CategorieType.entity';
+import { CategoryType } from '../entities/CategoryType.entity';
 
 const categoryRepository = AppDataSource.getRepository(Category);
 
 export const createCategory = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { name, parentId, categoryTypeId } = req.body;
+    const { name, libelle, description, categoryTypeId } = req.body;
 
-    // Vérification du categoryType
     const categoryType = await AppDataSource.getRepository(CategoryType).findOneBy({ id: categoryTypeId });
     if (!categoryType) {
       return res.status(404).json({ message: "CategoryType not found" });
     }
 
-    // Vérification du parent (si fourni)
-    let parentCategory = null;
-    if (parentId) {
-      parentCategory = await categoryRepository.findOneBy({ id: parentId });
-      if (!parentCategory) {
-        return res.status(404).json({ message: "Parent category not found" });
-      }
-    }
-
-    // Création de la catégorie
+    // Création de la catégorie avec les nouvelles colonnes
     const category = categoryRepository.create({
       name,
-      parentCategory,
+      libelle,
+      description,
       categoryType
     });
 
@@ -42,14 +33,13 @@ export const createCategory = async (req: Request, res: Response): Promise<any> 
 export const updateCategory = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const { name, parentId, categoryTypeId } = req.body;
+    const { name, libelle, description, categoryTypeId } = req.body;
 
     const category = await categoryRepository.findOneBy({ id: parseInt(id) });
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    // Vérification du categoryType
     if (categoryTypeId) {
       const categoryType = await AppDataSource.getRepository(CategoryType).findOneBy({ id: categoryTypeId });
       if (!categoryType) {
@@ -58,16 +48,10 @@ export const updateCategory = async (req: Request, res: Response): Promise<any> 
       category.categoryType = categoryType;
     }
 
-    // Vérification du parent
-    if (parentId) {
-      const parentCategory = await categoryRepository.findOneBy({ id: parentId });
-      if (!parentCategory) {
-        return res.status(404).json({ message: "Parent category not found" });
-      }
-      category.parentCategory = parentCategory;
-    }
-
+    // Mise à jour des champs, avec valeur par défaut si non fourni
     category.name = name || category.name;
+    category.libelle = libelle || category.libelle;
+    category.description = description || category.description;
 
     await categoryRepository.save(category);
     res.json(category);
@@ -77,10 +61,10 @@ export const updateCategory = async (req: Request, res: Response): Promise<any> 
   }
 };
 
-export const getAllCategories = async (req: Request, res: Response) => {
+export const getAllCategories = async (req: Request, res: Response): Promise<any> => {
   try {
     const categories = await categoryRepository.find({
-      relations: ["parentCategory", "categoryType", "children"]
+      relations: ["categoryType"]
     });
     res.json(categories);
   } catch (error) {

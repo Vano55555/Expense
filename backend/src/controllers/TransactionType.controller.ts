@@ -1,155 +1,103 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
-import { Transaction } from '../entities/Transaction.entity';
-import { User } from '../entities/User.entity';
-import { Expense } from '../entities/Expense.entity';
 import { TransactionType } from '../entities/TransactionType.entity';
 
+// Méthode pour créer un nouveau type de transaction
 export const createTransactionType = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { montant, modePaiement, date, userId, expenseId, transactiontypeId } = req.body;
+    const { nom } = req.body;
 
-    // Vérification du userName
-    if (!userId) {
-      return res.status(400).json({ message: "userName is required to create a transaction" });
+    // Vérifier que le nom du type de transaction est fourni
+    if (!nom) {
+      return res.status(400).json({ message: "Nom du type de transaction est requis" });
     }
 
-    // Récupérer l'utilisateur par son nom
-    const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Récupérer l'Expense par son nom
-    const expense = await AppDataSource.getRepository(Expense).findOneBy({ id: expenseId });
-    if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
-    }
-
-    // Récupérer le type de transaction par son nom
-    const transactionType = await AppDataSource.getRepository(TransactionType).findOneBy({ id: transactiontypeId });
-    if (!transactionType) {
-      return res.status(404).json({ message: "Transaction Type not found" });
-    }
-
-    // Créer la transaction en associant les entités
-    const transaction = AppDataSource.getRepository(Transaction).create({
-      montant,
-      modePaiement,
-      date,
-      expense,          // Associer l'Expense
-      transactionType,  // Associer le type de transaction
-      user,             // Associer l'utilisateur
+    // Créer un nouveau type de transaction
+    const transactionType = AppDataSource.getRepository(TransactionType).create({
+      nom
     });
 
-    // Sauvegarder la transaction dans la base de données
-    await AppDataSource.getRepository(Transaction).save(transaction);
+    // Sauvegarder le type de transaction
+    await AppDataSource.getRepository(TransactionType).save(transactionType);
 
-    // Retourner la transaction créée
-    res.status(201).json(transaction);
+    // Retourner le type de transaction créé
+    res.status(201).json(transactionType);
   } catch (error) {
-    console.error("Error creating transaction:", error);
-    res.status(500).json({ message: "Error creating transaction", error });
+    console.error("Erreur lors de la création du type de transaction:", error);
+    res.status(500).json({ message: "Erreur lors de la création du type de transaction", error });
   }
 };
 
-// Méthode pour récupérer toutes les transactions
-export const getAllTransactionTypes = async (req: Request, res: Response): Promise<any>=> {
+// Méthode pour récupérer tous les types de transactions
+export const getAllTransactionTypes = async (req: Request, res: Response): Promise<any> => {
   try {
-    const transactions = await AppDataSource.getRepository(Transaction).find({
-      relations: ["user", "expense", "transactionType"], // Chargement des relations
-    });
-    res.json(transactions);
+    const transactionTypes = await AppDataSource.getRepository(TransactionType).find();
+    res.json(transactionTypes); // Renvoie les types de transaction
   } catch (error) {
-    console.error("Error fetching transactions:", error);
-    res.status(500).json({ message: "Error fetching transactions", error });
+    console.error("Erreur lors de la récupération des types de transactions:", error);
+    res.status(500).json({ message: "Erreur lors de la récupération des types de transactions", error });
   }
 };
 
-// Méthode pour récupérer une transaction par son ID
-export const getTransactionById = async (req: Request, res: Response): Promise<any> => {
+// Méthode pour récupérer un type de transaction par son ID
+export const getTransactionTypeById = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const transaction = await AppDataSource.getRepository(Transaction).findOne({
+    const transactionType = await AppDataSource.getRepository(TransactionType).findOne({
       where: { id: parseInt(id) },
-      relations: ["user", "expense", "transactionType"], // Chargement des relations
     });
 
-    if (!transaction) {
-      return res.status(404).json({ message: "Transaction not found" });
+    if (!transactionType) {
+      return res.status(404).json({ message: "Type de transaction non trouvé" });
     }
 
-    res.json(transaction);
+    res.json(transactionType);
   } catch (error) {
-    console.error("Error fetching transaction:", error);
-    res.status(500).json({ message: "Error fetching transaction", error });
+    console.error("Erreur lors de la récupération du type de transaction:", error);
+    res.status(500).json({ message: "Erreur lors de la récupération du type de transaction", error });
   }
 };
 
-// Méthode pour mettre à jour une transaction
+// Méthode pour mettre à jour un type de transaction
 export const updateTransactionType = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const { montant, modePaiement, date, userId, expenseId, transactiontypeId } = req.body;
+    const { nom } = req.body;
 
-    // Récupérer la transaction à mettre à jour
-    const transaction = await AppDataSource.getRepository(Transaction).findOneBy({ id: parseInt(id) });
+    // Récupérer le type de transaction à mettre à jour
+    const transactionType = await AppDataSource.getRepository(TransactionType).findOneBy({ id: parseInt(id) });
 
-    if (!transaction) {
-      return res.status(404).json({ message: "Transaction not found" });
+    if (!transactionType) {
+      return res.status(404).json({ message: "Type de transaction non trouvé" });
     }
 
-    // Récupérer les entités associées
-    if (userId) {
-      const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
-      if (user) {
-        transaction.user = user; // Mettre à jour l'utilisateur
-      }
-    }
+    // Mettre à jour les champs
+    if (nom) transactionType.nom = nom;
 
-    if (expenseId) {
-      const expense = await AppDataSource.getRepository(Expense).findOneBy({ id: expenseId });
-      if (expense) {
-        transaction.expense = expense; // Mettre à jour l'Expense
-      }
-    }
+    // Sauvegarder le type de transaction mis à jour
+    await AppDataSource.getRepository(TransactionType).save(transactionType);
 
-    if (transactiontypeId) {
-      const transactionType = await AppDataSource.getRepository(TransactionType).findOneBy({ id: transactiontypeId });
-      if (transactionType) {
-        transaction.transactionType = transactionType;
-      }
-    }
-
-    // Mettre à jour les autres champs
-    if (montant) transaction.montant = montant;
-    if (modePaiement) transaction.modePaiement = modePaiement;
-    if (date) transaction.date = date;
-
-    // Sauvegarder la transaction mise à jour
-    await AppDataSource.getRepository(Transaction).save(transaction);
-
-    res.json(transaction);
+    res.json(transactionType);
   } catch (error) {
-    console.error("Error updating transaction:", error);
-    res.status(500).json({ message: "Error updating transaction", error });
+    console.error("Erreur lors de la mise à jour du type de transaction:", error);
+    res.status(500).json({ message: "Erreur lors de la mise à jour du type de transaction", error });
   }
 };
 
-// Méthode pour supprimer une transaction
+// Méthode pour supprimer un type de transaction
 export const deleteTransactionType = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const transaction = await AppDataSource.getRepository(Transaction).findOneBy({ id: parseInt(id) });
+    const transactionType = await AppDataSource.getRepository(TransactionType).findOneBy({ id: parseInt(id) });
 
-    if (!transaction) {
-      return res.status(404).json({ message: "Transaction not found" });
+    if (!transactionType) {
+      return res.status(404).json({ message: "Type de transaction non trouvé" });
     }
 
-    await AppDataSource.getRepository(Transaction).remove(transaction);
-    res.json({ message: "Transaction deleted successfully" });
+    await AppDataSource.getRepository(TransactionType).remove(transactionType);
+    res.json({ message: "Type de transaction supprimé avec succès" });
   } catch (error) {
-    console.error("Error deleting transaction:", error);
-    res.status(500).json({ message: "Error deleting transaction", error });
+    console.error("Erreur lors de la suppression du type de transaction:", error);
+    res.status(500).json({ message: "Erreur lors de la suppression du type de transaction", error });
   }
 };

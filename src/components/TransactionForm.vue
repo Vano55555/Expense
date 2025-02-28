@@ -9,70 +9,191 @@
         <h2>Créer une Transaction</h2>
         <form @submit.prevent="submitTransactionForm">
           <div class="form-group">
-            <label for="amount">Montant</label>
-            <input type="number" v-model="transaction.amount" id="amount" class="form-control" required />
+            <label for="montant">Montant</label>
+            <input type="number" v-model="transaction.montant" id="montant" class="form-control" required />
           </div>
+
+          <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" v-model="transaction.date" id="date" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label for="modePaiement">Mode de Paiement</label>
+            <input type="text" v-model="transaction.modePaiement" id="modePaiement" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+            <label for="expenseId">Expense ID</label>
+            <input type="number" v-model="transaction.expenseId" id="expenseId" class="form-control" required />
+          </div>
+
+          <div class="form-group">
+    <label for="userId">User ID</label>
+      <select v-model="transaction.userId" id="userId" class="form-control" required>
+    <option value="" disabled>-- Sélectionner un utilisateur --</option>
+      <option v-for="user in transactionUser" :key="user.id" :value="user.id">
+      {{ user.id }}
+      </option>
+        </select>
+</div>
           <div class="form-group">
             <label for="transactionTypeId">Type de Transaction</label>
-            <select v-model="transaction.transactionTypeId" id="transactionTypeId" class="form-control" required>
-              <option v-for="type in transactionTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
+            <select v-if="transactionTypes.length" v-model="transaction.transactionTypeId" id="transactionTypeId" class="form-control" required>
+              <option v-for="type in transactionTypes" :key="type.id" :value="type.id">{{ type.nom }}</option>
+              <option value="other">Autres</option>
             </select>
+            <p v-else>Chargement des types de transaction...</p>
           </div>
+
+          <div v-if="transaction.transactionTypeId === 'other'" class="form-group">
+            <label for="newTransactionType">Nouveau Type de Transaction</label>
+            <input type="text" v-model="newTransactionType" id="newTransactionType" class="form-control" required />
+          </div>
+
           <button type="submit" class="btn btn-primary">Enregistrer</button>
           <button type="button" @click="showModal = false" class="btn btn-secondary">Annuler</button>
         </form>
       </div>
     </div>
+
+    <!-- Liste des transactions -->
+    <h3>Liste des Transactions</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Montant</th>
+          <th>Date</th>
+          <th>Mode de Paiement</th>
+          <th>Expense ID</th>
+          <th>User ID</th>
+          <th>Type de Transaction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(transaction, index) in transactions" :key="index">
+          <td>{{ transaction.montant }}</td>
+          <td>{{ transaction.date }}</td>
+          <td>{{ transaction.modePaiement }}</td>
+          <td>{{ transaction.expenseId }}</td>
+          <td>{{ transaction.userId }}</td>
+          <td>{{ getTransactionTypeName(transaction.transactionTypeId) }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script lang="ts">
-import axios from 'axios';
+import { ref, reactive, onMounted, computed } from 'vue';
+//import axios from 'axios';
+import api from '../services/api';
 
 export default {
-  data() {
-    return {
-      showModal: false as boolean,
-      transaction: {
-        amount: 0 as number,
-        transactionTypeId: null as number | null
-      },
-      transactionTypes: [] as Array<{ id: number, name: string }> // Typage explicite
-    };
-  },
-  methods: {
-    async fetchTransactionTypes() {
+  setup() {
+    const showModal = ref(false);
+    const transaction = reactive({
+      montant: 0,
+      date: '',
+      modePaiement: '',
+      expenseId: null as number | null,
+      userId: null as number | null,
+      transactionTypeId: null as number | string | null,
+    });
+    const newTransactionType = ref('');
+    const transactionTypes = ref<Array<{ id: number; nom: string }>>([]);
+    const transactions = ref<Array<{ montant: number; date: string; modePaiement: string; expenseId: number; userId: number; transactionTypeId: number }>>([]);
+      const transactionUser = ref<Array<{ id: number; nom: string }>>([]);
+
+    const fetchTransactionTypes = async () => {
       try {
-        const response = await axios.get('/api/transaction_types');
-        console.log("Types de transactions reçus :", response.data); // Debug
-        this.transactionTypes = response.data;
+        const response = await api.get('/transaction_types');
+        console.log("Types de transactions reçus :", response.data);
+        transactionTypes.value = Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error("Erreur lors de la récupération des types de transactions", error);
       }
-    },
+    };
 
-    async submitTransactionForm() {
+const fetchTransactionUsers = async () => {
+  try {
+    const response = await api.get('/users'); // Assurez-vous que l'endpoint est correct
+    transactionUser.value = Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs", error);
+  }
+};
+
+
+    const fetchTransactions = async () => {
       try {
-        console.log("Envoi de la transaction :", this.transaction); // Debug
-        await axios.post('/api/transactions', this.transaction);
-        this.showModal = false;
-        this.$emit('transactionCreated');
-        this.resetForm();
+        const response = await api.get('/transactions');
+        transactions.value = response.data;
+      } catch (error) {
+        console.error("Erreur lors de la récupération des transactions", error);
+      }
+    };
+
+    const submitTransactionForm = async () => {
+      try {
+        let transactionTypeId = transaction.transactionTypeId;
+
+        if (transactionTypeId === 'other') {
+          const newTypeResponse = await api.post('/transactions', { name: newTransactionType.value });
+          transactionTypeId = newTypeResponse.data.id;
+        }
+
+        const transactionData = {
+          montant: transaction.montant,
+          date: transaction.date,
+          modePaiement: transaction.modePaiement,
+          expenseId: transaction.expenseId,
+          userId: transaction.userId,
+          transactionTypeId: transactionTypeId,
+        };
+
+        await api.post('/transactions', transactionData);
+        showModal.value = false;
+        resetForm();
+        fetchTransactions();
       } catch (error) {
         console.error("Erreur lors de la création de la transaction", error);
       }
-    },
+    };
 
-    resetForm() {
-      this.transaction = {
-        amount: 0,
-        transactionTypeId: null
-      };
-    }
+    const resetForm = () => {
+      transaction.montant = 0;
+      transaction.date = '';
+      transaction.modePaiement = '';
+      transaction.expenseId = null;
+      transaction.userId = null;
+      transaction.transactionTypeId = null;
+      newTransactionType.value = '';
+    };
+
+    const getTransactionTypeName = computed(() => (transactionTypeId: number) => {
+      const type = transactionTypes.value.find((type) => type.id === transactionTypeId);
+      return type ? type.nom : 'Inconnu';
+    });
+
+    onMounted(() => {
+      fetchTransactionTypes();
+      fetchTransactions();
+      fetchTransactionUsers(); // Appelle la fonction pour charger les utilisateurs
+
+    });
+
+    return {
+      showModal,
+      transaction,
+      newTransactionType,
+      transactionTypes,
+      transactions,
+      submitTransactionForm,
+      getTransactionTypeName,
+      transactionUser
+    };
   },
-  created() {
-    this.fetchTransactionTypes();
-  }
 };
 </script>
 
@@ -125,5 +246,22 @@ export default {
   background-color: #6c757d;
   color: white;
   margin-left: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #f4f4f4;
 }
 </style>

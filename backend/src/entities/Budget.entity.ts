@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from "typeorm";
-import { User } from "./User.entity";  // Importer la table User si nécessaire
-import { Category } from "./Category.entity";  // Importer la table Category si nécessaire
+import { User } from "./User.entity";  
+import { Category } from "./Category.entity";  
 
 @Entity()
 export class Budget {

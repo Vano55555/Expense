@@ -10,12 +10,11 @@ export const createExpenseUser = async (req: Request, res: Response): Promise<an
   try {
     const { expenseId, userId } = req.body;
 
-    // Vérification de l'existence des ids
     if (!expenseId || !userId) {
       return res.status(400).json({ message: "expenseId and userId are required" });
     }
 
-    // Vérifier si l'expense existe
+    // Vérifier si la dépense existe
     const expense = await AppDataSource.getRepository(Expense).findOneBy({ id: expenseId });
     const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
 

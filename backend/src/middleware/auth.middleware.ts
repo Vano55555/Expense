@@ -21,7 +21,7 @@ export const authMiddleware = (req: CustomRequest, res: Response, next: NextFunc
 
   try {
     const decoded = jwt.verify(token, 'votre_secret_key') as CustomRequest['user'];
-    req.user = decoded; // TypeScript reconnaîtra maintenant req.user
+    req.user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: 'Token invalide' });

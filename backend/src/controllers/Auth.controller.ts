@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import { getRepository } from 'typeorm';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = 'tonsecretkey'; // Utilise une clé secrète unique
+const JWT_SECRET = 'tonsecretkey';
 
 // Route pour la connexion
 export const login = async (req: Request, res: Response):Promise<any>=> {
@@ -33,7 +33,7 @@ export const login = async (req: Request, res: Response):Promise<any>=> {
     const token = jwt.sign(
       { id: user.id, email: user.email },
       JWT_SECRET,
-      { expiresIn: '1h' } // Le token expire après 1 heure
+      { expiresIn: '1h' } 
     );
 
     // Répondre avec un succès et le token
@@ -51,10 +51,10 @@ export const login = async (req: Request, res: Response):Promise<any>=> {
 
 export const logout = (req: Request, res: Response) => {
   try {
-    // Si vous utilisez des cookies pour stocker le token, vous pouvez les effacer
-    res.clearCookie('token'); // Remplacez 'token' par le nom de votre cookie
 
-    // Réponse de succès
+    res.clearCookie('token'); 
+
+
     return res.status(200).json({ success: true, message: 'Déconnexion réussie' });
   } catch (error) {
     console.error('Erreur lors de la déconnexion :', error);

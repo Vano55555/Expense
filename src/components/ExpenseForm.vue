@@ -7,43 +7,47 @@
       <i class="bi bi-plus-circle"></i> Ajouter une Dépense
     </button>
 
-  <div class="card shadow-sm mt-5">
-    <div class="card-body">
-      <h2 class="card-title text-center mb-4">Liste des Dépenses</h2>
-      <table class="table table-striped table-bordered">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Montant</th>
-            <th>Catégorie</th>
-            <th>Date</th>
-            <th>User ID</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="expense in expenses" :key="expense.id">
-            <td>{{ expense.id }}</td>
-            <td>{{ expense.montant }} FCFA</td>
-            <td>{{ expense.categorie }}</td>
-            <td>{{ formatDate(expense.date) }}</td>
-            <td>{{ expense.userId }}</td>
-            <td>
-              <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
-                <i class="bi bi-pencil"></i> Modifier
-              </button>
-              <button class="btn btn-danger btn-sm" @click="deleteExpense(expense.id)">
-                <i class="bi bi-trash"></i> Supprimer
-              </button>
-              <button class="btn btn-primary btn-sm" @click="downloadPDF(expense)">
-                <i class="bi bi-file-earmark-pdf"></i> Télécharger
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="card shadow-sm mt-5">
+      <div class="card-body">
+        <h2 class="card-title text-center mb-4">Liste des Dépenses</h2>
+        <table class="table table-striped table-bordered">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Montant</th>
+              <th>Catégorie</th>
+              <th>Date</th>
+              <th>Transaction</th>
+              <th>Budget</th>
+              <th>User ID</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="expense in expenses" :key="expense.id">
+              <td>{{ expense.id }}</td>
+              <td>{{ expense.montant }} FCFA</td>
+              <td>{{ expense.categorie }}</td>
+              <td>{{ formatDate(expense.date) }}</td>
+              <td>{{ expense.transaction }}</td>
+              <td>{{ expense.budget }}</td>
+              <td>{{ expense.userId }}</td>
+              <td>
+                <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
+                  <i class="bi bi-pencil"></i> Modifier
+                </button>
+                <button class="btn btn-danger btn-sm" @click="deleteExpense(expense.id)">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+                <button class="btn btn-primary btn-sm" @click="downloadPDF(expense)">
+                  <i class="bi bi-file-earmark-pdf"></i> Télécharger
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
     <!-- MODAL D'AJOUT/MODIFICATION -->
     <div v-if="showModal" class="modal-overlay">
@@ -58,11 +62,21 @@
             <label for="categorie" class="form-label">Catégorie</label>
             <select v-model="expense.categorie" class="form-select" id="categorie" required>
               <option value="" disabled>Choisissez une catégorie</option>
-              <option value="Alimentation">Alimentation</option>
-              <option value="Transports">Transports</option>
-              <option value="Logement">Logement</option>
-              <option value="Divertissement">Divertissement</option>
-              <option value="Autre">Autre</option>
+              <option v-for="categorie in categories" :key="categorie.id" :value="categorie.name">{{ categorie.name }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="transaction" class="form-label">Transaction</label>
+            <select v-model="expense.transaction" class="form-select" id="transaction" required>
+              <option value="" disabled>Choisissez une transaction</option>
+              <option v-for="transaction in transactions" :key="transaction.id" :value="transaction.name">{{ transaction.name }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="budget" class="form-label">Budget</label>
+            <select v-model="expense.budget" class="form-select" id="budget" required>
+              <option value="" disabled>Choisissez un budget</option>
+              <option v-for="budget in budgets" :key="budget.id" :value="budget.name">{{ budget.name }}</option>
             </select>
           </div>
           <div class="mb-3">
@@ -84,7 +98,6 @@
     </div>
   </div>
 </template>
-
 <script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
 import Swal from "sweetalert2";
@@ -97,11 +110,15 @@ export default defineComponent({
       id?: number;
       montant: number;
       categorie: string;
+      transaction: string;
+      budget: string;
       date: string;
       userId: number;
     }
 
     const API_URL = "http://localhost:3000/api/expenses"; 
+    const BUDGETS_API_URL = "http://localhost:3000/api/budgets"; 
+    const TRANSACTIONS_API_URL = "http://localhost:3000/api/transactions"; 
 
     const showModal = ref<boolean>(false);
     const expenses = ref<Expense[]>([]);
@@ -109,9 +126,15 @@ export default defineComponent({
     const expense = ref<Expense>({
       montant: 0,
       categorie: "",
+      transaction: "",
+      budget: "",
       date: "",
-      userId: 1, // Valeur par défaut (id utilisateur courant)
+      userId: 1,
     });
+
+    const categories = ref<{ id: number; name: string }[]>([]);
+    const budgets = ref<{ id: number; name: string }[]>([]);
+    const transactions = ref<{ id: number; name: string }[]>([]);
 
     // Récupérer les dépenses
     const fetchExpenses = async () => {
@@ -124,10 +147,30 @@ export default defineComponent({
       }
     };
 
+    // Récupérer les catégories, budgets, et transactions
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${BUDGETS_API_URL}`);
+        if (!response.ok) throw new Error("Erreur de récupération des budgets");
+        budgets.value = await response.json();
+      } catch (error) {
+        console.error("Erreur lors du chargement des budgets:", error);
+      }
+    };
+
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch(`${TRANSACTIONS_API_URL}`);
+        if (!response.ok) throw new Error("Erreur de récupération des transactions");
+        transactions.value = await response.json();
+      } catch (error) {
+        console.error("Erreur lors du chargement des transactions:", error);
+      }
+    };
+
     // Sauvegarder une dépense
     const saveExpense = async () => {
-      // Vérifier si tous les champs sont remplis
-      if (!expense.value.montant || !expense.value.categorie || !expense.value.date) {
+      if (!expense.value.montant || !expense.value.categorie || !expense.value.transaction || !expense.value.budget || !expense.value.date) {
         Swal.fire("Erreur", "Veuillez remplir tous les champs.", "error");
         return;
       }
@@ -162,8 +205,7 @@ export default defineComponent({
     // Supprimer une dépense
     const deleteExpense = async (id?: number) => {
       if (!id) return;
-      
-      // Utilisation de SweetAlert pour confirmation
+
       const result = await Swal.fire({
         title: 'Confirmer la suppression',
         text: "Voulez-vous vraiment supprimer cette dépense ?",
@@ -188,7 +230,7 @@ export default defineComponent({
 
     // Réinitialiser le formulaire
     const resetForm = () => {
-      expense.value = { montant: 0, categorie: "", date: "", userId: expense.value.userId };
+      expense.value = { montant: 0, categorie: "", transaction: "", budget: "", date: "", userId: expense.value.userId };
     };
 
     // Fermer le modal
@@ -203,16 +245,21 @@ export default defineComponent({
 
     const downloadPDF = (expense: Expense) => {
       const doc = new jsPDF();
-      doc.text(`Dépense ID: ${expense.id}\nMontant: ${expense.montant} €\nCatégorie: ${expense.categorie}\nDate: ${expense.date}\nUser ID: ${expense.userId}`, 10, 10);
+      doc.text(`Dépense ID: ${expense.id}\nMontant: ${expense.montant} €\nCatégorie: ${expense.categorie}\nTransaction: ${expense.transaction}\nBudget: ${expense.budget}\nDate: ${expense.date}\nUser ID: ${expense.userId}`, 10, 10);
       doc.save(`Depense_${expense.id}.pdf`);
     };
 
-    onMounted(fetchExpenses);
+    onMounted(() => {
+      fetchExpenses();
+      fetchCategories();
+      fetchTransactions();
+    });
 
-    return { showModal, expenses, expense, editingExpense, saveExpense, editExpense, deleteExpense, resetForm, closeModal, formatDate, downloadPDF };
+    return { showModal, expenses, expense, editingExpense, saveExpense, editExpense, deleteExpense, resetForm, closeModal, formatDate, downloadPDF, categories, budgets, transactions };
   },
 });
 </script>
+
 
 <style scoped>
 /* Styles généraux */

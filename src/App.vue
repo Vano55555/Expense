@@ -7,7 +7,15 @@
           <router-link to="/" class="navbar-brand">
             <strong>GESTION DES DEPENSES</strong>
           </router-link>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarNav">
@@ -38,15 +46,10 @@
                   <i class="bi bi-person-circle"></i> Expense User
                 </router-link>
               </li>
-              <!-- New Links for Category and CategoryType forms -->
+              
               <li class="nav-item">
                 <router-link to="/categoryform" class="nav-link special-link">
                   <i class="bi bi-folder-plus"></i> Catégorie
-                </router-link>
-              </li>
-              <li class="nav-item">
-                <router-link to="/categorytypeform" class="nav-link special-link">
-                  <i class="bi bi-tags"></i> Type de Catégorie
                 </router-link>
               </li>
             </ul>
@@ -57,7 +60,7 @@
       <!-- Content Section -->
       <div class="content-container mt-4">
         <!-- The routed view will be injected here -->
-        <router-view></router-view>
+        <router-view />
       </div>
     </div>
   </div>
@@ -67,7 +70,12 @@
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-  name: 'App'
+  name: 'App',
+
+  setup() {
+
+    return {};
+  },
 });
 </script>
 

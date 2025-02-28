@@ -29,11 +29,11 @@ export const createBudget = async (req: Request, res: Response): Promise<any> =>
     const budget = budgetRepository.create({
       montantBudget,
       montantDepense,
-      categories: categorie,  // Associer la catégorie
-      user: user,  // Associer l'utilisateur
+      categories: categorie, 
+      user: user,  
     });
 
-    // Sauvegarder le budget dans la base de données
+    // Sauvegarder le budget 
     await budgetRepository.save(budget);
 
     res.status(201).json(budget);
@@ -48,12 +48,11 @@ export const updateBudget = async (req: Request, res: Response): Promise<any> =>
     const { id } = req.params;
     const { montantBudget, montantDepense, categorieId, userId } = req.body;
 
-    // Vérification des IDs
     if (!userId || !categorieId) {
       return res.status(400).json({ message: "userId and categorieId are required to update a budget" });
     }
 
-    // Récupérer le budget à mettre à jour
+    // Récupérer le budget à modifier
     const budget = await budgetRepository.findOneBy({ id: parseInt(id) });
 
     if (!budget) {

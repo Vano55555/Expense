@@ -6,7 +6,7 @@ import { ExpenseUser } from '../entities/Expense_User.entity';
 import { Budget } from '../entities/Budget.entity';
 import { Transaction } from '../entities/Transaction.entity';
 import { TransactionType } from '../entities/TransactionType.entity';
-import { CategoryType } from '../entities/CategorieType.entity';
+import { CategoryType } from '../entities/CategoryType.entity';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',

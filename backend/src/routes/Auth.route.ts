@@ -1,8 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { login } from '../controllers/Auth.controller'; // Importez la fonction login
+import { login } from '../controllers/Auth.controller';
 
-// Déclarez un module pour étendre l'interface Request d'Express
 declare module 'express' {
   interface Request {
     user?: {
@@ -34,7 +33,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// Utilisez la fonction login importée
 router.post('/api/login', login);
 
 export default router;

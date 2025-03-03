@@ -6,7 +6,7 @@ import ExpenseForm from './components/ExpenseForm.vue';
 import BudgetForm from './components/BudgetForm.vue';
 import TransactionForm from './components/TransactionForm.vue';
 import CategoryForm from './components/CategoryForm.vue';
-import ExpenseUserForm from './components/ExpenseUserForm.vue';
+//import ExpenseUserForm from './components/ExpenseUserForm.vue';
 
 // Définissez les routes
 const routes = [
@@ -30,10 +30,10 @@ const routes = [
     path: '/categoryform',
     component: CategoryForm,
   },
-  {
+  /*{
     path: '/expenseuserform',
     component: ExpenseUserForm,
-  },
+  },*/
   {
     path: '/',
     redirect: '/users', // Redirige vers /users par défaut

@@ -32,6 +32,6 @@ export class User {
   @OneToMany(() => ExpenseUser, (expenseUser) => expenseUser.user)
   expenseUsers!: ExpenseUser[]; 
 
-  @OneToMany(() => Budget, (budget) => budget)
-  budgets!: Budget[]; 
+  @OneToMany(() => Budget, (budget) => budget.utilisateur)
+  budgets!: Budget[];
 }

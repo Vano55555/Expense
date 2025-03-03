@@ -17,8 +17,7 @@
               <th>Montant</th>
               <th>Catégorie</th>
               <th>Date</th>
-              <th>Transaction</th>
-              <th>Budget</th>
+              <th>Type de Transaction</th>
               <th>User ID</th>
               <th>Actions</th>
             </tr>
@@ -29,8 +28,7 @@
               <td>{{ expense.montant }} FCFA</td>
               <td>{{ expense.categorie }}</td>
               <td>{{ formatDate(expense.date) }}</td>
-              <td>{{ expense.transaction }}</td>
-              <td>{{ expense.budget }}</td>
+              <td>{{ getTransactionTypeName(expense.transactionTypeId) }}</td>
               <td>{{ expense.userId }}</td>
               <td>
                 <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
@@ -53,55 +51,59 @@
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <h3 class="text-center">{{ editingExpense ? "Modifier" : "Ajouter" }} une Dépense</h3>
-        <form @submit.prevent="saveExpense">
-          <div class="mb-3">
+        <form @submit.prevent="saveExpense" class="form-grid">
+          <div class="form-group">
             <label for="montant" class="form-label">Montant</label>
             <input type="number" v-model="expense.montant" class="form-control" id="montant" required placeholder="Entrez le montant" />
           </div>
-          <div class="mb-3">
+          <div class="form-group">
+            <label for="user" class="form-label">Utilisateur</label>
+            <select v-model="expense.userId" class="form-control" id="user" required>
+              <option value="" disabled>Choisissez un utilisateur</option>
+              <option v-for="user in users" :key="user.id" :value="user.id">{{ user.nom }}</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="categorie" class="form-label">Catégorie</label>
-            <select v-model="expense.categorie" class="form-select" id="categorie" required>
+            <select v-model="expense.categorie" class="form-control" id="categorie" required>
               <option value="" disabled>Choisissez une catégorie</option>
               <option v-for="categorie in categories" :key="categorie.id" :value="categorie.name">{{ categorie.name }}</option>
             </select>
           </div>
-          <div class="mb-3">
-            <label for="transaction" class="form-label">Transaction</label>
-            <select v-model="expense.transaction" class="form-select" id="transaction" required>
-              <option value="" disabled>Choisissez une transaction</option>
-              <option v-for="transaction in transactions" :key="transaction.id" :value="transaction.name">{{ transaction.name }}</option>
+          <div class="form-group">
+            <label for="transactionType" class="form-label">Type de Transaction</label>
+            <select v-model="expense.transactionTypeId" class="form-control" id="transactionType" required>
+              <option value="" disabled>Choisissez un type de transaction</option>
+              <option v-for="type in transactionTypes" :key="type.id" :value="type.id">{{ type.nom }}</option>
             </select>
           </div>
-          <div class="mb-3">
-            <label for="budget" class="form-label">Budget</label>
-            <select v-model="expense.budget" class="form-select" id="budget" required>
-              <option value="" disabled>Choisissez un budget</option>
-              <option v-for="budget in budgets" :key="budget.id" :value="budget.name">{{ budget.name }}</option>
-            </select>
-          </div>
-          <div class="mb-3">
+          <div class="form-group">
             <label for="date" class="form-label">Date</label>
             <input type="date" v-model="expense.date" class="form-control" id="date" required />
           </div>
 
-          <button type="submit" class="btn btn-success w-100 mt-2">
-            <i class="bi bi-check-circle"></i> {{ editingExpense ? "Modifier" : "Ajouter" }}
-          </button>
-          <button type="button" class="btn btn-secondary w-100 mt-2" @click="resetForm">
-            <i class="bi bi-arrow-clockwise"></i> Réinitialiser
-          </button>
-          <button type="button" class="btn btn-danger w-100 mt-2" @click="closeModal">
-            <i class="bi bi-x-circle"></i> Annuler
-          </button>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle"></i> {{ editingExpense ? "Modifier" : "Ajouter" }}
+            </button>
+            <button type="button" class="btn btn-secondary" @click="resetForm">
+              <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+            </button>
+            <button type="button" class="btn btn-danger" @click="closeModal">
+              <i class="bi bi-x-circle"></i> Annuler
+            </button>
+          </div>
         </form>
       </div>
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import jsPDF from "jspdf";
+import api from "../services/api"; // Assurez-vous d'importer votre service API
 
 export default defineComponent({
   name: "ExpenseForm",
@@ -110,15 +112,10 @@ export default defineComponent({
       id?: number;
       montant: number;
       categorie: string;
-      transaction: string;
-      budget: string;
+      transactionTypeId: number; 
       date: string;
       userId: number;
     }
-
-    const API_URL = "http://localhost:3000/api/expenses"; 
-    const BUDGETS_API_URL = "http://localhost:3000/api/budgets"; 
-    const TRANSACTIONS_API_URL = "http://localhost:3000/api/transactions"; 
 
     const showModal = ref<boolean>(false);
     const expenses = ref<Expense[]>([]);
@@ -126,66 +123,89 @@ export default defineComponent({
     const expense = ref<Expense>({
       montant: 0,
       categorie: "",
-      transaction: "",
-      budget: "",
+      transactionTypeId: 0,
       date: "",
       userId: 1,
     });
 
+    const users = ref<{ id: number; nom: string }[]>([]);
     const categories = ref<{ id: number; name: string }[]>([]);
-    const budgets = ref<{ id: number; name: string }[]>([]);
-    const transactions = ref<{ id: number; name: string }[]>([]);
+    const transactionTypes = ref<{ id: number; nom: string }[]>([]);
 
     // Récupérer les dépenses
     const fetchExpenses = async () => {
       try {
-        const response = await fetch(`${API_URL}?userId=${expense.value.userId}`);
-        if (!response.ok) throw new Error("Erreur de récupération des dépenses");
-        expenses.value = await response.json();
+        const response = await api.get('/expenses'); 
+        if (response.data && Array.isArray(response.data)) {
+          expenses.value = response.data;
+        } else {
+          throw new Error("Format de données inattendu pour les dépenses");
+        }
       } catch (error) {
         console.error("Erreur lors du chargement des dépenses:", error);
       }
     };
 
-    // Récupérer les catégories, budgets, et transactions
-    const fetchCategories = async () => {
+    // Récupérer les utilisateurs
+    const fetchUsers = async () => {
       try {
-        const response = await fetch(`${BUDGETS_API_URL}`);
-        if (!response.ok) throw new Error("Erreur de récupération des budgets");
-        budgets.value = await response.json();
+        const response = await api.get('/users'); // Assurez-vous que l'endpoint est correct
+        if (response.data && Array.isArray(response.data)) {
+          users.value = response.data;
+        } else {
+          throw new Error("Format de données inattendu pour les utilisateurs");
+        }
       } catch (error) {
-        console.error("Erreur lors du chargement des budgets:", error);
+        console.error("Erreur lors du chargement des utilisateurs:", error);
       }
     };
 
-    const fetchTransactions = async () => {
+    // Récupérer les catégories
+    const fetchCategories = async () => {
       try {
-        const response = await fetch(`${TRANSACTIONS_API_URL}`);
-        if (!response.ok) throw new Error("Erreur de récupération des transactions");
-        transactions.value = await response.json();
+        const response = await api.get('/categories'); // Assurez-vous que l'endpoint est correct
+        if (response.data && Array.isArray(response.data)) {
+          categories.value = response.data;
+        } else {
+          throw new Error("Format de données inattendu pour les catégories");
+        }
       } catch (error) {
-        console.error("Erreur lors du chargement des transactions:", error);
+        console.error("Erreur lors du chargement des catégories:", error);
+      }
+    };
+
+    // Récupérer les types de transaction
+    const fetchTransactionTypes = async () => {
+      try {
+        const response = await api.get('/transaction_types'); // Assurez-vous que l'endpoint est correct
+        if (response.data && Array.isArray(response.data)) {
+          transactionTypes.value = response.data;
+        } else {
+          throw new Error("Format de données inattendu pour les types de transaction");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des types de transaction", error);
       }
     };
 
     // Sauvegarder une dépense
     const saveExpense = async () => {
-      if (!expense.value.montant || !expense.value.categorie || !expense.value.transaction || !expense.value.budget || !expense.value.date) {
+      if (!expense.value.montant || !expense.value.categorie || !expense.value.transactionTypeId || !expense.value.date) {
         Swal.fire("Erreur", "Veuillez remplir tous les champs.", "error");
         return;
       }
 
       try {
         const method = editingExpense.value ? "PUT" : "POST";
-        const url = editingExpense.value && expense.value.id ? `${API_URL}/${expense.value.id}` : API_URL;
+        const url = editingExpense.value && expense.value.id ? `/expenses/${expense.value.id}` : '/expenses';
 
-        const response = await fetch(url, {
+        const response = await api({
           method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(expense.value),
+          url,
+          data: expense.value,
         });
 
-        if (!response.ok) throw new Error("Erreur lors de l'enregistrement de la dépense");
+        if (!response.data) throw new Error("Erreur lors de l'enregistrement de la dépense");
 
         Swal.fire("Succès", editingExpense.value ? "Dépense modifiée avec succès !" : "Dépense ajoutée avec succès !", "success");
         closeModal();
@@ -220,8 +240,7 @@ export default defineComponent({
       if (!result.isConfirmed) return;
 
       try {
-        const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-        if (!response.ok) throw new Error("Erreur lors de la suppression");
+        await api.delete(`/expenses/${id}`);
         fetchExpenses();
       } catch (error) {
         console.error("Erreur lors de la suppression de la dépense:", error);
@@ -230,7 +249,7 @@ export default defineComponent({
 
     // Réinitialiser le formulaire
     const resetForm = () => {
-      expense.value = { montant: 0, categorie: "", transaction: "", budget: "", date: "", userId: expense.value.userId };
+      expense.value = { montant: 0, categorie: "", transactionTypeId: 0, date: "", userId: expense.value.userId };
     };
 
     // Fermer le modal
@@ -243,19 +262,43 @@ export default defineComponent({
     // Formater la date
     const formatDate = (date: string) => new Date(date).toLocaleDateString("fr-FR");
 
+    // Télécharger un PDF
     const downloadPDF = (expense: Expense) => {
       const doc = new jsPDF();
-      doc.text(`Dépense ID: ${expense.id}\nMontant: ${expense.montant} €\nCatégorie: ${expense.categorie}\nTransaction: ${expense.transaction}\nBudget: ${expense.budget}\nDate: ${expense.date}\nUser ID: ${expense.userId}`, 10, 10);
+      doc.text(`Dépense ID: ${expense.id}\nMontant: ${expense.montant} FCFA\nCatégorie: ${expense.categorie}\nType de Transaction: ${getTransactionTypeName(expense.transactionTypeId)}\nDate: ${expense.date}\nUser ID: ${expense.userId}`, 10, 10);
       doc.save(`Depense_${expense.id}.pdf`);
+    };
+
+    // Obtenir le nom du type de transaction
+    const getTransactionTypeName = (transactionTypeId: number) => {
+      const type = transactionTypes.value.find((t) => t.id === transactionTypeId);
+      return type ? type.nom : 'Inconnu';
     };
 
     onMounted(() => {
       fetchExpenses();
+      fetchUsers();
       fetchCategories();
-      fetchTransactions();
+      fetchTransactionTypes(); 
     });
 
-    return { showModal, expenses, expense, editingExpense, saveExpense, editExpense, deleteExpense, resetForm, closeModal, formatDate, downloadPDF, categories, budgets, transactions };
+    return {
+      showModal,
+      expenses,
+      expense,
+      editingExpense,
+      saveExpense,
+      editExpense,
+      deleteExpense,
+      resetForm,
+      closeModal,
+      formatDate,
+      downloadPDF,
+      users,
+      categories,
+      transactionTypes,
+      getTransactionTypeName,
+    };
   },
 });
 </script>
@@ -282,12 +325,48 @@ body {
 
 .modal-content {
   background: #ffffff;
-  padding: 30px;
+  padding: 20px;
   border-radius: 10px;
-  width: 400px;
-  max-width: 100%;
+  width: 90%;
+  max-width: 500px; /* Réduit la largeur maximale */
+  overflow-y: auto;
+  max-height: 90vh;
 }
 
+/* Formulaire en grille */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Deux colonnes */
+  gap: 10px; /* Espacement réduit entre les champs */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 0.9em; /* Taille de police réduite */
+}
+
+.form-control {
+  width: 100%;
+  padding: 6px; /* Padding réduit */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9em; /* Taille de police réduite */
+}
+
+/* Actions du formulaire */
+.form-actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px; /* Espacement réduit entre les boutons */
+  margin-top: 10px;
+}
 /* Table */
 th {
   color: #007bff;

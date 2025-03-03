@@ -7,15 +7,15 @@ const budgetRepository = AppDataSource.getRepository(Budget);
 
 export const createBudget = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { montantBudget, montantDepense, categorieId, userId } = req.body;
+    const { montantBudget, montantDepense, categorieId, utilisateurId } = req.body;
 
     // Vérification des IDs
-    if (!userId || !categorieId) {
+    if (!utilisateurId || !categorieId) {
       return res.status(400).json({ message: "userId and categorieId are required to create a budget" });
     }
 
     // Récupérer l'utilisateur et la catégorie
-    const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
+    const user = await AppDataSource.getRepository(User).findOneBy({ id: utilisateurId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -29,8 +29,8 @@ export const createBudget = async (req: Request, res: Response): Promise<any> =>
     const budget = budgetRepository.create({
       montantBudget,
       montantDepense,
-      categories: categorie, 
-      user: user,  
+      categorie: categorie, 
+      utilisateur: user,  
     });
 
     // Sauvegarder le budget 
@@ -46,9 +46,9 @@ export const createBudget = async (req: Request, res: Response): Promise<any> =>
 export const updateBudget = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const { montantBudget, montantDepense, categorieId, userId } = req.body;
+    const { montantBudget, montantDepense, categorieId, utilisateurId } = req.body;
 
-    if (!userId || !categorieId) {
+    if (!utilisateurId || !categorieId) {
       return res.status(400).json({ message: "userId and categorieId are required to update a budget" });
     }
 
@@ -60,7 +60,7 @@ export const updateBudget = async (req: Request, res: Response): Promise<any> =>
     }
 
     // Récupérer l'utilisateur et la catégorie
-    const user = await AppDataSource.getRepository(User).findOneBy({ id: userId });
+    const user = await AppDataSource.getRepository(User).findOneBy({ id: utilisateurId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -73,8 +73,8 @@ export const updateBudget = async (req: Request, res: Response): Promise<any> =>
     // Mettre à jour les champs du budget
     budget.montantBudget = montantBudget;
     budget.montantDepense = montantDepense;
-    budget.categories = categorie;  
-    budget.user = user; 
+    budget.categorie = categorie;  
+    budget.utilisateur = user; 
 
     // Sauvegarder le budget mis à jour
     await budgetRepository.save(budget);
@@ -88,14 +88,15 @@ export const updateBudget = async (req: Request, res: Response): Promise<any> =>
 
 export const getAllBudgets = async (req: Request, res: Response) => {
   try {
-    const budgets = await budgetRepository.find({ relations: ["users", "categories"] });  // Charger les relations
+    const budgets = await budgetRepository.find({
+      relations: ["utilisateur", "categorie"],
+    });
     res.json(budgets);
   } catch (error) {
     console.error("Error fetching budgets:", error);
     res.status(500).json({ message: "Error fetching budgets", error });
   }
 };
-
 export const deleteBudget = async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;

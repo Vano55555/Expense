@@ -41,11 +41,6 @@
                   <i class="bi bi-credit-card"></i> Transactions
                 </router-link>
               </li>
-              <li class="nav-item">
-                <router-link to="/expenseuser" class="nav-link special-link">
-                  <i class="bi bi-person-circle"></i> Expense User
-                </router-link>
-              </li>
               
               <li class="nav-item">
                 <router-link to="/categoryform" class="nav-link special-link">

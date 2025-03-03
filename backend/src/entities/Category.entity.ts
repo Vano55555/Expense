@@ -20,7 +20,7 @@ export class Category {
     @OneToMany(() => Expense, depense => depense.categorie) 
     expenses!: Expense[];
 
-    @OneToMany(() => Budget, (budget) => budget.categories)
+    @OneToMany(() => Budget, (budget) => budget.categorie)
     budgets!: Budget[];
 
   @ManyToOne(() => CategoryType, (categoryType) => categoryType.categories, { nullable: false })

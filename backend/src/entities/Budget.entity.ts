@@ -9,16 +9,16 @@ export class Budget {
 
     @ManyToOne(() => User, user => user.budgets)
     @JoinColumn({ name: "utilisateurId" })
-    user!: User;
+    utilisateur!: User;
 
     @ManyToOne(() => Category, category => category.budgets)
     @JoinColumn({ name: "categorieId" })
-    categories!: Category;
+    categorie!: Category; 
 
     @Column("decimal")
     montantBudget!: number;  
 
     @Column("decimal", { default: 0 })
     montantDepense!: number; 
-    categorie: any;
+    categories: any;
 }

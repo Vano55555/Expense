@@ -24,22 +24,19 @@
           </div>
 
           <div class="form-group">
-            <label for="expenseId">Expense ID</label>
-            <input type="number" v-model="transaction.expenseId" id="expenseId" class="form-control" required />
+            <label for="userId">Utilisateur</label>
+            <select v-model="transaction.userId" id="userId" class="form-control" required>
+              <option value="" disabled>-- Sélectionner un utilisateur --</option>
+              <option v-for="user in transactionUser" :key="user.id" :value="user.id">
+                {{ user.nom }}
+              </option>
+            </select>
           </div>
 
           <div class="form-group">
-    <label for="userId">User ID</label>
-      <select v-model="transaction.userId" id="userId" class="form-control" required>
-    <option value="" disabled>-- Sélectionner un utilisateur --</option>
-      <option v-for="user in transactionUser" :key="user.id" :value="user.id">
-      {{ user.id }}
-      </option>
-        </select>
-</div>
-          <div class="form-group">
             <label for="transactionTypeId">Type de Transaction</label>
             <select v-if="transactionTypes.length" v-model="transaction.transactionTypeId" id="transactionTypeId" class="form-control" required>
+              <option value="" disabled>-- Sélectionner un type de transaction --</option>
               <option v-for="type in transactionTypes" :key="type.id" :value="type.id">{{ type.nom }}</option>
               <option value="other">Autres</option>
             </select>
@@ -66,7 +63,7 @@
           <th>Date</th>
           <th>Mode de Paiement</th>
           <th>Expense ID</th>
-          <th>User ID</th>
+          <th>Utilisateur</th>
           <th>Type de Transaction</th>
         </tr>
       </thead>
@@ -75,9 +72,9 @@
           <td>{{ transaction.montant }}</td>
           <td>{{ transaction.date }}</td>
           <td>{{ transaction.modePaiement }}</td>
-          <td>{{ transaction.expenseId }}</td>
-          <td>{{ transaction.userId }}</td>
-          <td>{{ getTransactionTypeName(transaction.transactionTypeId) }}</td>
+          <td>{{ transaction.expenseId }} </td>
+          <td>{{ transaction.user?.nom }} {{ transaction.user?.prenom }}</td>
+          <td>{{ transaction.transactionType?.nom }}</td>
         </tr>
       </tbody>
     </table>
@@ -86,7 +83,6 @@
 
 <script lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue';
-//import axios from 'axios';
 import api from '../services/api';
 
 export default {
@@ -103,32 +99,33 @@ export default {
     const newTransactionType = ref('');
     const transactionTypes = ref<Array<{ id: number; nom: string }>>([]);
     const transactions = ref<Array<{ montant: number; date: string; modePaiement: string; expenseId: number; userId: number; transactionTypeId: number }>>([]);
-      const transactionUser = ref<Array<{ id: number; nom: string }>>([]);
+    const transactionUser = ref<Array<{ id: number; nom: string }>>([]);
+
+    const fetchTransactionUsers = async () => {
+      try {
+        const response = await api.get('/users');
+        console.log('Utilisateurs récupérés :', response.data);
+        transactionUser.value = Array.isArray(response.data) ? response.data : [];
+      } catch (error) {
+        console.error("Erreur lors de la récupération des utilisateurs", error);
+      }
+    };
 
     const fetchTransactionTypes = async () => {
       try {
         const response = await api.get('/transaction_types');
-        console.log("Types de transactions reçus :", response.data);
+        console.log('Types de transactions récupérés :', response.data);
         transactionTypes.value = Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error("Erreur lors de la récupération des types de transactions", error);
       }
     };
 
-const fetchTransactionUsers = async () => {
-  try {
-    const response = await api.get('/users'); // Assurez-vous que l'endpoint est correct
-    transactionUser.value = Array.isArray(response.data) ? response.data : [];
-  } catch (error) {
-    console.error("Erreur lors de la récupération des utilisateurs", error);
-  }
-};
-
-
     const fetchTransactions = async () => {
       try {
         const response = await api.get('/transactions');
-        transactions.value = response.data;
+        console.log('Transactions récupérées :', response.data);
+        transactions.value = Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error("Erreur lors de la récupération des transactions", error);
       }
@@ -139,7 +136,7 @@ const fetchTransactionUsers = async () => {
         let transactionTypeId = transaction.transactionTypeId;
 
         if (transactionTypeId === 'other') {
-          const newTypeResponse = await api.post('/transactions', { name: newTransactionType.value });
+          const newTypeResponse = await api.post('/transaction_types', { nom: newTransactionType.value });
           transactionTypeId = newTypeResponse.data.id;
         }
 
@@ -155,7 +152,7 @@ const fetchTransactionUsers = async () => {
         await api.post('/transactions', transactionData);
         showModal.value = false;
         resetForm();
-        fetchTransactions();
+        await fetchTransactions();
       } catch (error) {
         console.error("Erreur lors de la création de la transaction", error);
       }
@@ -176,11 +173,15 @@ const fetchTransactionUsers = async () => {
       return type ? type.nom : 'Inconnu';
     });
 
+    const getUserName = computed(() => (userId: number) => {
+      const user = transactionUser.value.find((user) => user.id === userId);
+      return user ? user.nom : 'Inconnu';
+    });
+
     onMounted(() => {
       fetchTransactionTypes();
       fetchTransactions();
-      fetchTransactionUsers(); // Appelle la fonction pour charger les utilisateurs
-
+      fetchTransactionUsers();
     });
 
     return {
@@ -189,9 +190,10 @@ const fetchTransactionUsers = async () => {
       newTransactionType,
       transactionTypes,
       transactions,
+      transactionUser,
       submitTransactionForm,
       getTransactionTypeName,
-      transactionUser
+      getUserName,
     };
   },
 };

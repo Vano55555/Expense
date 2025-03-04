@@ -33,6 +33,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-router.post('/api/login', login);
+router.post('/login', login);
 
 export default router;

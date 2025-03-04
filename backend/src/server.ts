@@ -32,6 +32,7 @@ AppDataSource.initialize()
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/login', authRoutes);
 app.use('/api/budgets', budgetRoutes);  
 app.use('/api/transactions', transactionRoutes);  
 app.use('/api/expense_users', expenseuserRoutes);  

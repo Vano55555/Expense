@@ -28,8 +28,8 @@
               <td>{{ expense.montant }} FCFA</td>
               <td>{{ expense.categorie }}</td>
               <td>{{ formatDate(expense.date) }}</td>
-              <td>{{ getTransactionTypeName(expense.transactionTypeId) }}</td>
-              <td>{{ expense.userId }}</td>
+              <td>{{ expense.transactionType?.nom }}</td>
+              <td>{{ expense.user?.nom }} {{ expense.user?.prenom }}</td>
               <td>
                 <button class="btn btn-warning btn-sm" @click="editExpense(expense)">
                   <i class="bi bi-pencil"></i> Modifier
@@ -136,8 +136,10 @@ export default defineComponent({
     const fetchExpenses = async () => {
       try {
         const response = await api.get('/expenses'); 
+        
         if (response.data && Array.isArray(response.data)) {
           expenses.value = response.data;
+          console.log("Dépenses chargées :", expenses.value);
         } else {
           throw new Error("Format de données inattendu pour les dépenses");
         }
@@ -148,17 +150,19 @@ export default defineComponent({
 
     // Récupérer les utilisateurs
     const fetchUsers = async () => {
-      try {
-        const response = await api.get('/users'); // Assurez-vous que l'endpoint est correct
-        if (response.data && Array.isArray(response.data)) {
-          users.value = response.data;
-        } else {
-          throw new Error("Format de données inattendu pour les utilisateurs");
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement des utilisateurs:", error);
-      }
-    };
+  try {
+    const response = await api.get('/users');
+    console.log("Réponse brute de l'API pour users :", response.data);
+    if (response.data && Array.isArray(response.data)) {
+      users.value = response.data;
+      console.log("Utilisateurs mis à jour :", users.value);
+    } else {
+      throw new Error("Format de données inattendu pour les utilisateurs");
+    }
+  } catch (error) {
+    console.error("Erreur lors du chargement des utilisateurs :", error);
+  }
+};
 
     // Récupérer les catégories
     const fetchCategories = async () => {
@@ -176,45 +180,51 @@ export default defineComponent({
 
     // Récupérer les types de transaction
     const fetchTransactionTypes = async () => {
-      try {
-        const response = await api.get('/transaction_types'); // Assurez-vous que l'endpoint est correct
-        if (response.data && Array.isArray(response.data)) {
-          transactionTypes.value = response.data;
-        } else {
-          throw new Error("Format de données inattendu pour les types de transaction");
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des types de transaction", error);
-      }
-    };
-
+  try {
+    const response = await api.get('/transaction_types');
+    console.log("Réponse brute de l'API pour transaction_types :", response.data);
+    if (response.data && Array.isArray(response.data)) {
+      transactionTypes.value = response.data;
+      console.log("Types de transaction mis à jour :", transactionTypes.value);
+    } else {
+      throw new Error("Format de données inattendu pour les types de transaction");
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération des types de transaction :", error);
+  }
+};
     // Sauvegarder une dépense
     const saveExpense = async () => {
-      if (!expense.value.montant || !expense.value.categorie || !expense.value.transactionTypeId || !expense.value.date) {
-        Swal.fire("Erreur", "Veuillez remplir tous les champs.", "error");
-        return;
-      }
+  if (!expense.value.montant || !expense.value.categorie || !expense.value.transactionTypeId || !expense.value.date || !expense.value.userId) {
+    Swal.fire("Erreur", "Veuillez remplir tous les champs.", "error");
+    return;
+  }
 
-      try {
-        const method = editingExpense.value ? "PUT" : "POST";
-        const url = editingExpense.value && expense.value.id ? `/expenses/${expense.value.id}` : '/expenses';
+  try {
+    const method = editingExpense.value ? "PUT" : "POST";
+    const url = editingExpense.value && expense.value.id ? `/expenses/${expense.value.id}` : '/expenses';
 
-        const response = await api({
-          method,
-          url,
-          data: expense.value,
-        });
+    const response = await api({
+      method,
+      url,
+      data: expense.value,
+    });
 
-        if (!response.data) throw new Error("Erreur lors de l'enregistrement de la dépense");
+    if (!response.data) throw new Error("Erreur lors de l'enregistrement de la dépense");
 
-        Swal.fire("Succès", editingExpense.value ? "Dépense modifiée avec succès !" : "Dépense ajoutée avec succès !", "success");
-        closeModal();
-        fetchExpenses();
-      } catch (error) {
-        console.error("Erreur lors de l'ajout/modification de la dépense:", error);
-      }
-    };
-
+    Swal.fire("Succès", editingExpense.value ? "Dépense modifiée avec succès !" : "Dépense ajoutée avec succès !", "success");
+    closeModal();
+    await Promise.all([
+      fetchExpenses(),
+      fetchUsers(),
+      fetchTransactionTypes(),
+      fetchCategories(), // Si les catégories peuvent aussi changer
+    ]);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout/modification de la dépense :", error);
+    Swal.fire("Erreur", "Une erreur s'est produite lors de la sauvegarde.", "error");
+  }
+};
     // Modifier une dépense
     const editExpense = (exp: Expense) => {
       expense.value = { ...exp };
@@ -271,17 +281,34 @@ export default defineComponent({
 
     // Obtenir le nom du type de transaction
     const getTransactionTypeName = (transactionTypeId: number) => {
+      //console.log("Liste des types de transaction:", transactionTypes.value);
       const type = transactionTypes.value.find((t) => t.id === transactionTypeId);
       return type ? type.nom : 'Inconnu';
     };
 
-    onMounted(() => {
-      fetchExpenses();
-      fetchUsers();
-      fetchCategories();
-      fetchTransactionTypes(); 
-    });
+    const getUserName = (userId: number) => {
+  const user = users.value.find((u) => u.id === userId);
+  return user ? user.nom : 'Inconnu';
+};
 
+onMounted(async () => {
+  try {
+    await Promise.all([
+      fetchExpenses(),
+      fetchUsers(),
+      fetchCategories(),
+      fetchTransactionTypes(),
+    ]);
+    console.log("Toutes les données sont chargées :", {
+      expenses: expenses.value,
+      users: users.value,
+      categories: categories.value,
+      transactionTypes: transactionTypes.value,
+    });
+  } catch (error) {
+    console.error("Erreur lors du chargement initial des données :", error);
+  }
+});
     return {
       showModal,
       expenses,
@@ -298,6 +325,7 @@ export default defineComponent({
       categories,
       transactionTypes,
       getTransactionTypeName,
+      getUserName
     };
   },
 });

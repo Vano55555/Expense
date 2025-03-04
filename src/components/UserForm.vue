@@ -50,7 +50,6 @@
               </div>
               <button type="submit" class="btn btn-success w-100 py-2">Créer l'utilisateur</button>
               <button type="button" class="btn btn-danger w-100 py-2 mt-2" data-bs-dismiss="modal">Annuler</button>
-
             </form>
           </div>
         </div>
@@ -88,7 +87,7 @@
       <div class="card-body">
         <h2 class="card-title text-center mb-4">Liste des Utilisateurs</h2>
         <table class="table table-striped table-bordered">
-          <thead class="table-  dark">
+          <thead class="table-dark">
             <tr>
               <th>ID</th>
               <th>Nom</th>
@@ -119,7 +118,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
-import axios from 'axios';
+import api from '../services/api';
 
 export default defineComponent({
   name: 'UserForm',
@@ -143,60 +142,68 @@ export default defineComponent({
 
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/users');
+        const response = await api.get('/users');
         users.value = response.data;
       } catch (error) {
         console.error(error);
+        alert('Erreur lors du chargement des utilisateurs');
       }
     };
 
     const createUser = async () => {
       try {
-        await axios.post('http://localhost:3000/api/users', user.value);
+        const response = await api.post('/users', user.value);
+        console.log('Utilisateur créé :', response.data);
         fetchUsers(); // Rafraîchir la liste après l'ajout
         user.value = { nom: '', prenom: '', dateNaissance: '', sexe: 'Masculin', email: '', password: '' }; // Réinitialiser le formulaire
+        alert('Utilisateur créé avec succès !');
+        // Fermer le modal après la création
+        const userModal = new (window as any).bootstrap.Modal(document.getElementById('userModal'));
+        userModal.hide();
       } catch (error) {
         console.error(error);
+        alert('Erreur lors de la création de l\'utilisateur');
       }
     };
 
     const deleteUser = async (id: number) => {
       try {
-        await axios.delete(`http://localhost:3000/api/users/${id}`);
+        const response = await api.delete(`/users/${id}`);
+        console.log('Utilisateur supprimé :', response.data);
         fetchUsers();
-      } catch (error) { 
+        alert('Utilisateur supprimé avec succès !');
+      } catch (error) {
         console.error(error);
+        alert('Erreur lors de la suppression de l\'utilisateur');
       }
     };
 
     const editUser = (userToEdit: any) => {
-  user.value = { ...userToEdit }; 
+      user.value = { ...userToEdit };
+      const userModal = new (window as any).bootstrap.Modal(document.getElementById('userModal'));
+      userModal.show();
+    };
 
-  const userModal = new (window as any).bootstrap.Modal(document.getElementById('userModal'));
-  userModal.show();
-};
+    const loginUser = async () => {
+      try {
+        console.log("Données envoyées :", loginData.value);
 
-const loginUser = async () => {
-  try {
-    console.log("Données envoyées :", loginData.value); // Place cette ligne ici pour s'assurer qu'elle s'exécute avant l'envoi
+        const response = await api.post('/auth/login', loginData.value, {
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-    const response = await axios.post('http://localhost:5000/api/login', loginData.value, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+        console.log("Réponse du serveur :", response.data);
 
-    console.log(loginData.value);
-    console.log(response.data);  
-
-    if (response.data.success) {
-      alert('Connexion réussie!');
-    } else {
-      alert('Échec de la connexion');
-    }
-  } catch (error) {
-    console.error('Erreur lors de la connexion : ', error);
-    alert('Erreur lors de la connexion');
-  }
-};
+        if (response.data.success) {
+          alert('Connexion réussie !');
+        } else {
+          alert('Échec de la connexion : ' + response.data.message);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la connexion : ', error);
+        alert('Erreur lors de la connexion : ' + error);
+      }
+    };
 
     // Charger les utilisateurs au démarrage
     onMounted(fetchUsers);

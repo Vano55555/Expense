@@ -2,8 +2,8 @@ import 'reflect-metadata';
 import express from 'express';
 import { AppDataSource } from './config/database';
 import expenseRoutes from './routes/Expense.route';
-import userRoutes from './routes/User.route';
-import authRoutes from './routes/Auth.route';
+import { userRoutes } from './routes/User.route'; // Importation correcte
+import authRoutes from './routes/Auth.route'; // Routes d'authentification
 import budgetRoutes from './routes/Budget.route';
 import transactionRoutes from './routes/Transaction.route';
 import expenseuserRoutes from './routes/Expense_User.route';
@@ -30,9 +30,8 @@ AppDataSource.initialize()
 
 // Routes
 app.use('/api/expenses', expenseRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/auth/login', authRoutes);
+app.use('/api/users', userRoutes); // Routes utilisateur
+app.use('/api/auth', authRoutes);  // Routes d'authentification
 app.use('/api/budgets', budgetRoutes);  
 app.use('/api/transactions', transactionRoutes);  
 app.use('/api/expense_users', expenseuserRoutes);  

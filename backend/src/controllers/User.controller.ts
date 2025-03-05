@@ -4,106 +4,113 @@ import { User } from '../entities/User.entity';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Crée une interface 
-interface LoginRequestBody {
-  email: string;
-  password: string;
-}
-
 const userRepository = AppDataSource.getRepository(User);
 
-export const getAllUsers = async (req: Request, res: Response) => {
-  try {
-    const users = await userRepository.find({ relations: ['expenses'] });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching users", error });
-  }
-};
-
-export const createUser = async (req: Request, res: Response) => {
-  try {
-    const { nom, prenom, dateNaissance, sexe, email, password } = req.body;
-    const user = userRepository.create({ nom, prenom, dateNaissance, sexe, email, password });
-    await userRepository.save(user);
-    res.status(201).json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Error creating user", error });
-  }
-};
-
-export const updateUser = async (req: Request, res: Response): Promise <any> => {
-  try {
-    const { id } = req.params;
-    const { nom, prenom, dateNaissance, sexe, email, password } = req.body;
-    const user = await userRepository.findOneBy({ id: parseInt(id) });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    user.nom = nom;
-    user.prenom = prenom;
-    user.dateNaissance = dateNaissance;
-    user.sexe = sexe;
-    user.email = email;
-    user.password = password;
-
-    await userRepository.save(user);
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating user", error });
-  }
-};
-
-export const deleteUser = async (req: Request, res: Response): Promise <any> => {
-  try {
-    const { id } = req.params;
-    const result = await userRepository.delete(id);
-
-    if (result.affected === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting user", error });
-  }
-};
-
-interface LoginRequestBody {
-  email: string;
-  password: string;
-}
-
-export const loginUser = async (req: Request<{}, {}, LoginRequestBody>, res: Response): Promise <any> => {
+// Contrôleur pour la connexion
+export const loginUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email, password } = req.body;
 
     // Recherche de l'utilisateur par email
-    const user = await userRepository.findOne({ where: { email } });
+    const user = await userRepository.findOne({
+      where: { email },
+    });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
     // Comparaison des mots de passe
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Identifiants invalides' });
     }
 
     // Création du token JWT
-    const token = jwt.sign({ id: user.id }, 'your_secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id }, 'votre_secret_key', { expiresIn: '1h' });
 
-    res.status(200).json({ token });
-
+    // Réponse contenant le token et les informations de l'utilisateur
+    res.status(200).json({
+      UtilisateurTrouver: {
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+      },
+      SonToken: token,
+      Message: "Connexion réussie"
+    });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      res.status(500).json({ message: 'Error logging in user', error: error.message });
+      res.status(500).json({ message: 'Erreur lors de la connexion', error: error.message });
     } else {
-      res.status(500).json({ message: 'Unknown error', error });
+      res.status(500).json({ message: 'Erreur inconnue', error });
     }
+  }
+};
+
+// Récupérer tous les utilisateurs
+export const all = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const users = await userRepository.find();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs', error });
+  }
+};
+
+// Récupérer un utilisateur par son ID
+export const one = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await userRepository.findOneBy({ id: parseInt(req.params.id) });
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération de l\'utilisateur', error });
+  }
+};
+
+// Créer un nouvel utilisateur
+export const save = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const newUser = userRepository.create(req.body);
+    await userRepository.save(newUser);
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la création de l\'utilisateur', error });
+  }
+};
+
+// Mettre à jour un utilisateur existant
+export const update = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await userRepository.findOneBy({ id: parseInt(req.params.id) });
+    if (user) {
+      userRepository.merge(user, req.body);
+      const result = await userRepository.save(user);
+      res.status(200).json(result);
+    } else {
+      res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'utilisateur', error });
+  }
+};
+
+// Supprimer un utilisateur
+export const remove = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await userRepository.findOneBy({ id: parseInt(req.params.id) });
+    if (user) {
+      await userRepository.remove(user);
+      res.status(200).json({ message: 'Utilisateur supprimé' });
+    } else {
+      res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la suppression de l\'utilisateur', error });
   }
 };

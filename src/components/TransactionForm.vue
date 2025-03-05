@@ -62,7 +62,7 @@
           <th>Montant</th>
           <th>Date</th>
           <th>Mode de Paiement</th>
-          <th>Expense ID</th>
+          <!--<td> <th>Expense ID</th>-->
           <th>Utilisateur</th>
           <th>Type de Transaction</th>
         </tr>
@@ -72,7 +72,7 @@
           <td>{{ transaction.montant }}</td>
           <td>{{ transaction.date }}</td>
           <td>{{ transaction.modePaiement }}</td>
-          <td>{{ transaction.expenseId }} </td>
+          <!--<td>{{ transaction.expenseId }}</td>-->
           <td>{{ transaction.user?.nom }} {{ transaction.user?.prenom }}</td>
           <td>{{ transaction.transactionType?.nom }}</td>
         </tr>

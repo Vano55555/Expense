@@ -1,12 +1,13 @@
-import { Router } from 'express';
-import { getAllUsers, createUser, updateUser, deleteUser, loginUser } from '../controllers/User.controller';
+import * as express from "express";
+import * as UserController from '../controllers/User.controller'; // Import correct
 
-const router = Router();
+const router = express.Router();
 
-router.post('/login', loginUser); 
-router.get('/', getAllUsers);
-router.post('/', createUser);
-router.put('/:id', updateUser);
-router.delete('/:id', deleteUser);
+// Utilisez UserController au lieu de utilisateurCtrl
+router.get('/api/utilisateur/liste/', UserController.all);
+router.get('/api/utilisateur/show/:id', UserController.one);
+router.post('/api/utilisateur/store', UserController.save);
+router.put('/api/utilisateur/update/:id', UserController.update);
+router.delete('/api/utilisateur/delete/:id', UserController.remove);
 
-export default router;
+export { router as userRoutes };

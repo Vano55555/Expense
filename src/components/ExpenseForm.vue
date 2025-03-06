@@ -17,7 +17,7 @@
               <th>Montant</th>
               <th>Catégorie</th>
               <th>Date</th>
-              <th>Type de Transaction</th>
+           
               <th>User ID</th>
               <th>Actions</th>
             </tr>
@@ -28,7 +28,6 @@
               <td>{{ expense.montant }} FCFA</td>
               <td>{{ expense.categorie }}</td>
               <td>{{ formatDate(expense.date) }}</td>
-              <td>{{ expense.transactionType?.nom }}</td>
               <td>{{ expense.user?.nom }} {{ expense.user?.prenom }}</td>
               <td>
                 <button class="btn btn-warning btn-sm" @click="editExpense(expense)">

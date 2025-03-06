@@ -3,11 +3,7 @@ import * as UserController from '../controllers/User.controller'; // Import corr
 
 const router = express.Router();
 
-// Utilisez UserController au lieu de utilisateurCtrl
-router.get('/api/utilisateur/liste/', UserController.all);
-router.get('/api/utilisateur/show/:id', UserController.one);
-router.post('/api/utilisateur/store', UserController.save);
-router.put('/api/utilisateur/update/:id', UserController.update);
-router.delete('/api/utilisateur/delete/:id', UserController.remove);
+// Route pour la connexion
+router.post('/api/utilisateur/login', UserController.loginUser);
 
 export { router as userRoutes };

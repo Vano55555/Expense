@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Transaction } from './Transaction.entity';
+import { Expense } from './Expense.entity';
 
 @Entity()
 export class TransactionType {

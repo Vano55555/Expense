@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from "typeorm";
-import { Expense } from "./Expense.entity";  
+import { Expense } from "./Expense.entity";
 import { User } from "./User.entity";
 import { TransactionType } from "./TransactionType.entity";
 

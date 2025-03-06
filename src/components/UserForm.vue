@@ -33,6 +33,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   data() {
     return {
@@ -41,25 +42,48 @@ export default {
       errorMessage: ''
     };
   },
+
+  mounted() {
+    // Code exécuté après le montage du composant
+    console.log("Composant monté !");
+  },
   methods: {
     async handleLogin() {
-      try {
-        const response = await this.$axios.post('/api/auth/login', {
-          email: this.email,
-          password: this.password
-        });
-        const { token, user } = response.data;
+      console.log("ALOOOOOOOOOOOO ===> ", {
+      email: this.email,
+      password: this.password,}
+    )
+  try {
+    const response = await axios.post('http://localhost:3000/api/auth/login', {
+      email: this.email,
+      password: this.password,
+    });
 
-        // Stocker le token dans le stockage local ou Vuex pour utilisation future
-        localStorage.setItem('token', token);
-        // Rediriger vers une page protégée ou la page d'accueil
-        this.$router.push('/dashboard');
-      } catch (error) {
-        this.errorMessage = 'Identifiants invalides';
-      }
+    // if () {
+
+    // }
+
+    console.log (response)
+    const { token, user } = response.data;
+
+    // Stocker le token dans le stockage local ou Vuex pour utilisation future
+    localStorage.setItem('token', token);
+    console.log('Utilisateur:', user);
+
+    // Rediriger vers une page protégée ou la page d'accueil
+    this.$router.push('/dashboard');
+  } catch (error) {
+    console.log("Erreur ===>", error)
+    if (error.response) {
+      this.errorMessage = error.response.data.message || 'Identifiants invalides';
+    } else {
+      this.errorMessage = 'Erreur de connexion';
     }
   }
+}
+  }
 };
+
 </script>
 
 <style scoped>

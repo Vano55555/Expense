@@ -16,7 +16,11 @@ const cors = require('cors');
 const app = express();
 const port = 3000;
 
-app.use(cors());
+//Gestion des cors
+app.use(cors(
+    {origin:  ['http://localhost:5173','http://localhost:3000' ],
+    credentials: true
+}));
 app.use(express.json());
 
 // Connexion à la base de données
@@ -30,8 +34,8 @@ AppDataSource.initialize()
 
 // Routes
 app.use('/api/expenses', expenseRoutes);
-app.use('/api/users', userRoutes); // Routes utilisateur
-app.use('/api/auth', authRoutes);  // Routes d'authentification
+app.use('/api/users', userRoutes); 
+app.use('/api/auth', authRoutes);  
 app.use('/api/budgets', budgetRoutes);  
 app.use('/api/transactions', transactionRoutes);  
 app.use('/api/expense_users', expenseuserRoutes);  
